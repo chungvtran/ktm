@@ -17,7 +17,7 @@ import _ from 'lodash';
 import { Layout } from 'antd';
 
 import Home from 'containers/Home/Loadable';
-import FeaturePage from 'containers/FeaturePage/Loadable';
+import ReportPage from 'containers/ReportPage/Loadable';
 import NotFoundPage from 'containers/NotFoundPage/Loadable';
 
 import Sidebar from '../../components/Sidebar/index';
@@ -28,6 +28,13 @@ import { toggleSidebar } from './actions';
 
 import GlobalStyle from '../../global-styles';
 import { makeSelectSidebar } from './selectors';
+import {
+  HomeFilled,
+  FileTextFilled
+} from '@ant-design/icons';
+
+import { useInjectSaga } from 'utils/injectSaga';
+import { useInjectReducer } from 'utils/injectReducer';
 
 const AppWrapper = styled.div`
   max-width: calc(768px + 16px * 2);
@@ -40,27 +47,37 @@ const AppWrapper = styled.div`
 
 const routes = [
   {
-    name: 'home',
+    name: 'Home',
     component: Home,
-    path: '/'
+    path: '/',
+    icon: <HomeFilled />
   },
   {
-    name: 'home',
-    component: FeaturePage,
-    path: '/a'
+    name: 'Report',
+    component: ReportPage,
+    path: '/report',
+    icon: <FileTextFilled />,
   }
 
 ]
 
 export function App({
   onToggleSidebar,
-  sidebarOpen
+  sidebarOpen,
+  history
 }) {
+
+  const currentPath = history.location.pathname;
 
   return (
     <div>
       <Layout>
-        <Sidebar sidebarOpen={sidebarOpen} onCollapse={onToggleSidebar}/>
+        <Sidebar
+          sidebarOpen={sidebarOpen}
+          onCollapse={onToggleSidebar}
+          routes={routes}
+          currentPath={currentPath}
+        />
         <Layout className="site-layout">
           <Header sidebarOpen={sidebarOpen} onToggleSidebar={onToggleSidebar} />
           <Switch>

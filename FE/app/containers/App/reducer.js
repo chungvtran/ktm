@@ -18,7 +18,8 @@ export const initialState = {
   userData: {
     repositories: false,
   },
-  sidebarOpen: false
+  sidebarOpen: false,
+  currentRoute: '/'
 };
 
 /* eslint-disable default-case, no-param-reassign */

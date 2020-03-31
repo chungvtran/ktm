@@ -1,14 +1,32 @@
 .sider {
   min-height: 100vh;
-  background-color: #2A3557;
+  background-color: #07439C;
+  color: white !important;
 }
 
 .menu {
-  background-color: #2A3557;
+  background-color: #07439C;
 }
 
 .logo {
   height: 32px;
   background: rgba(255, 255, 255, 0.2); 
   margin: 14px
+}
+
+.sub-menu {
+  background-color: #07439C;
+  margin: 0 !important;
+}
+
+.ant-menu-item-active {
+  background-color: #05367F;
+}
+
+.ant-menu-submenu-selected {
+  background-color: #1890ff !important;
+}
+
+.ant-menu-submenu ant-menu-submenu-inline ant-menu-submenu-open .ant-menu-submenu-selected {
+  background: transparent;
 }
