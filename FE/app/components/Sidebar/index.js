@@ -9,7 +9,6 @@ import {
 } from 'react-router-dom';
 
 import '../../styles/components/Sidebar.css'
-import SubMenu from 'antd/lib/menu/SubMenu';
 
 function Sidebar(props) {
   const { Sider } = Layout;

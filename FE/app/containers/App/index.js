@@ -12,7 +12,7 @@ import { connect } from 'react-redux';
 import { compose } from 'redux';
 import { createStructuredSelector } from 'reselect';
 import styled from 'styled-components';
-import { Switch, Route } from 'react-router-dom';
+import { Switch, Route, Redirect, withRouter } from 'react-router-dom';
 import _ from 'lodash';
 import { Layout } from 'antd';
 
@@ -22,9 +22,11 @@ import NotFoundPage from 'containers/NotFoundPage/Loadable';
 
 import Sidebar from '../../components/Sidebar/index';
 import Header from '../../components/Header/index';
-import Content from '../../components/Content/index';
+import PrivateRoute from '../../auth/routes';
 
 import { toggleSidebar } from './actions';
+import { isLogin, login, isAuth } from '../../utils/auth'
+
 
 import GlobalStyle from '../../global-styles';
 import { makeSelectSidebar } from './selectors';
@@ -49,7 +51,7 @@ const routes = [
   {
     name: 'Home',
     component: Home,
-    path: '/',
+    path: '/home',
     icon: <HomeFilled />
   },
   {
@@ -60,15 +62,17 @@ const routes = [
   }
 
 ]
+const URL = "http://localhost:3000"
 
 export function App({
   onToggleSidebar,
   sidebarOpen,
-  history
+  history,
 }) {
 
   const currentPath = history.location.pathname;
-
+  const returnUrl = URL + currentPath;
+  console.log(currentPath);
   return (
     <div>
       <Layout>
@@ -82,27 +86,14 @@ export function App({
           <Header sidebarOpen={sidebarOpen} onToggleSidebar={onToggleSidebar} />
           <Switch>
             {_.map(routes, (route, index) => (
-              <Route
-                key={index}
+              <PrivateRoute
+                routes={history.location}
+                key={route.path}
                 path={route.path}
-                exact
-                component={() => {
-                  // if (route.initFunc) {
-                  //   route.initFunc(route);
-                  // }
-                  const Component = route.component;
-                  return (
-                    <Content>
-                      <Component />
-                    </Content>
-                  );
-                }}
+                component={route.component}
               />
             ))}
-            {/* <Content />
-          <Route exact path="/" component={Home} />
-          <Route path="/features" component={FeaturePage} />
-          <Route path="" component={NotFoundPage} /> */}
+            <Route exact strict render={() => <Redirect to="/home" />} />
           </Switch>
         </Layout>
       </Layout>
@@ -129,4 +120,4 @@ const withConnect = connect(
 export default compose(
   withConnect,
   memo,
-)(App);
+)(withRouter(App));

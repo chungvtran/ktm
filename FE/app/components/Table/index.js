@@ -1,32 +1,14 @@
-/**
- *
- * ReportPage
- *
- */
-
-import React, { memo } from 'react';
-import PropTypes from 'prop-types';
-import { connect } from 'react-redux';
-import { FormattedMessage } from 'react-intl';
-import { createStructuredSelector } from 'reselect';
-import { compose } from 'redux';
-
-import { useInjectSaga } from 'utils/injectSaga';
-import { useInjectReducer } from 'utils/injectReducer';
-import makeSelectReportPage from './selectors';
-import reducer from './reducer';
-import saga from './saga';
-import messages from './messages';
+import React from 'react';
+// import PropTypes from 'prop-types';
+// import styled from 'styled-components';
 import { Table, Tag, Select } from 'antd';
 
-export function ReportPage() {
-  useInjectReducer({ key: 'reportPage', reducer });
-  useInjectSaga({ key: 'reportPage', saga });
-
+function CommonTable(props) {
   const { Option } = Select;
+  const { columns, data } = props;
 
-  /* Sample data */
-  const columns = [
+   /* Sample data */
+   const columns = [
     {
       title: 'Status',
       key: 'status',
@@ -102,38 +84,10 @@ export function ReportPage() {
   /* */
 
   return (
-    <div>
-      <div className="select"  style={{ paddingBottom: 20 }}>
-        <Select defaultValue="send" style={{ width: 120 }}>
-          <Option value="send">Send</Option>
-          <Option value="Receive">Receive</Option>
-        </Select>
-      </div>
-      <Table columns={columns} dataSource={data} />
-    </div>
+    <Table columns={columns} dataSource={data}  />
   );
 }
 
-ReportPage.propTypes = {
-  dispatch: PropTypes.func.isRequired,
-};
+CommonTable.propTypes = {};
 
-const mapStateToProps = createStructuredSelector({
-  reportPage: makeSelectReportPage(),
-});
-
-function mapDispatchToProps(dispatch) {
-  return {
-    dispatch,
-  };
-}
-
-const withConnect = connect(
-  mapStateToProps,
-  mapDispatchToProps,
-);
-
-export default compose(
-  withConnect,
-  memo,
-)(ReportPage);
+export default CommonTable;

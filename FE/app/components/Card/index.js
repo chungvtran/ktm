@@ -8,7 +8,7 @@ function CommonCard(props) {
   const { title, content } = props;
 
   return (
-    <Col md={24} xl={8}>
+    <Col md={8} xl={8} xs={24}>
       <Card>
         <Meta
           avatar={
