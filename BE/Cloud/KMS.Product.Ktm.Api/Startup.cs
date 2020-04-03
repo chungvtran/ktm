@@ -24,6 +24,8 @@ namespace KMS.Product.Ktm.Api
 {
     public class Startup
     {
+        private const string AllowAllOrigin = nameof(AllowAllOrigin);
+
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
@@ -48,6 +50,11 @@ namespace KMS.Product.Ktm.Api
             services.AddScoped(typeof(IBaseRepository<>), typeof(BaseRepository<>));
             services.AddScoped<IKudoTypeRepository, KudoTypeRepository>();
             services.AddScoped<IKudoRepository, KudoRepository>();
+            services.AddCors(options =>
+            {
+                //TODO: temporarily allow all origins
+                options.AddPolicy(AllowAllOrigin, builder => builder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -65,6 +72,8 @@ namespace KMS.Product.Ktm.Api
             app.UseRouting();
 
             app.UseAuthorization();
+
+            app.UseCors(AllowAllOrigin);
 
             app.UseEndpoints(endpoints =>
             {

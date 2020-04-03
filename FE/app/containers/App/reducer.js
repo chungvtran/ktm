@@ -8,7 +8,16 @@
  */
 
 import produce from 'immer';
-import { LOAD_REPOS_SUCCESS, LOAD_REPOS, LOAD_REPOS_ERROR, TOGGLE_SIDEBAR } from './constants';
+import {
+  LOAD_REPOS_SUCCESS,
+  LOAD_REPOS,
+  LOAD_REPOS_ERROR,
+  TOGGLE_SIDEBAR,
+  SIGN_IN_START,
+  SIGN_IN_SUCCESS,
+  SIGN_IN_FAILURE,
+  SIGN_OUT_SUCCESS
+} from './constants';
 
 // The initial state of the App
 export const initialState = {
@@ -18,8 +27,12 @@ export const initialState = {
   userData: {
     repositories: false,
   },
+  isAuthenticated: false,
   sidebarOpen: false,
-  currentRoute: '/'
+  // currentRoute: '/',
+  token: null,
+  userInfo: null,
+  role: null
 };
 
 /* eslint-disable default-case, no-param-reassign */
@@ -43,7 +56,33 @@ const appReducer = (state = initialState, action) =>
         draft.loading = false;
         break;
 
-      case TOGGLE_SIDEBAR: 
+      case SIGN_IN_START:
+        draft.loading = true;
+        break;
+
+      case SIGN_IN_SUCCESS:
+        draft.loading = false;
+        draft.isAuthenticated = true;
+        draft.userInfo = action.userInfo;
+        draft.token = action.token;
+        break;
+
+      case SIGN_IN_FAILURE:
+        draft.loading = false;
+        draft.isAuthenticated = false
+        draft.userInfo = action.userInfo;
+        draft.token = action.token;
+        break;
+
+      case SIGN_OUT_SUCCESS:
+        draft.loading = false;
+        draft.isAuthenticated = false;
+        draft.token = null;
+        draft.userInfo = null;
+        draft.token = null;
+        break;
+        
+      case TOGGLE_SIDEBAR:
         draft.sidebarOpen = !state.sidebarOpen;
         break;
     }

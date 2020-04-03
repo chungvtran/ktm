@@ -17,7 +17,7 @@ function Sidebar(props) {
   return (
     <Sider className="sider" collapsed={sidebarOpen} onCollapse={onCollapse}>
       <div className="logo" />
-      <Menu className="menu" theme="dark" mode="inline" defaultSelectedKeys={[currentPath]}>
+      <Menu className="menu" theme="dark" mode="inline" selectedKeys={[window.location.pathname]}>
         {_.map(routes, (route, index) => ( 
           <Menu.Item key={route.path}>
             <Link to={route.path} className="nav-link" style={{ textDecoration: 'none' }}>

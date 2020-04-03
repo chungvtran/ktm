@@ -8,7 +8,7 @@ import '../../styles/components/Header.css';
 
 function Header(props) {
   const { Header } = Layout;
-  const { onToggleSidebar, sidebarOpen } = props;
+  const { onToggleSidebar, sidebarOpen, fullname } = props;
 
   return (
     <Header className="header site-layout-background">
@@ -19,7 +19,7 @@ function Header(props) {
       }
       <span>Home</span>
 
-      <span className="user-info">Hello USER</span>
+    <span className="user-info">Hello {fullname} </span>
     </Header>
   );
 }

@@ -18,34 +18,25 @@ import { Layout } from 'antd';
 
 import Home from 'containers/Home/Loadable';
 import ReportPage from 'containers/ReportPage/Loadable';
-import NotFoundPage from 'containers/NotFoundPage/Loadable';
+import Authentication from 'containers/Authentication';
 
-import Sidebar from '../../components/Sidebar/index';
-import Header from '../../components/Header/index';
-import PrivateRoute from '../../auth/routes';
-
+import Sidebar from 'components/Sidebar/index';
+import Header from 'components/Header/index';
+import { PrivateRoute } from 'helper';
 import { toggleSidebar } from './actions';
-import { isLogin, login, isAuth } from '../../utils/auth'
-
-
 import GlobalStyle from '../../global-styles';
-import { makeSelectSidebar } from './selectors';
+import {
+  makeSelectSidebar,
+  makeSelectIsAuthenticated,
+  makeSelectLoading,
+  makeSelectUserInfo,
+  makeSelectRole
+} from './selectors';
 import {
   HomeFilled,
   FileTextFilled
 } from '@ant-design/icons';
-
-import { useInjectSaga } from 'utils/injectSaga';
-import { useInjectReducer } from 'utils/injectReducer';
-
-const AppWrapper = styled.div`
-  max-width: calc(768px + 16px * 2);
-  margin: 0 auto;
-  display: flex;
-  min-height: 100%;
-  padding: 0 16px;
-  flex-direction: column;
-`;
+import config from 'utils/config';
 
 const routes = [
   {
@@ -60,50 +51,53 @@ const routes = [
     path: '/report',
     icon: <FileTextFilled />,
   }
-
 ]
-const URL = "http://localhost:3000"
 
-export function App({
-  onToggleSidebar,
-  sidebarOpen,
-  history,
-}) {
+export function App(props) {
+  const {
+    onToggleSidebar,
+    sidebarOpen,
+    userInfo,
+    isAuthenticated,
+  } = props;
 
-  const currentPath = history.location.pathname;
-  const returnUrl = URL + currentPath;
-  console.log(currentPath);
+  if (window.location.pathname === '/callback') {
+    return (<Route to="/callback" component={Authentication} />)
+  }
+
+  const main = <div>
+    <Layout>
+      <Sidebar
+        sidebarOpen={sidebarOpen}
+        onCollapse={onToggleSidebar}
+        routes={routes}
+      />
+      <Layout className="site-layout">
+        <Header sidebarOpen={sidebarOpen} onToggleSidebar={onToggleSidebar} fullname={userInfo ? userInfo.fullName : ''} />
+        <Switch>
+          {_.map(routes, (route) => (
+            <PrivateRoute key={route.path} component={route.component} path={route.path} exact />
+          ))}
+        </Switch>
+      </Layout>
+    </Layout>
+    <GlobalStyle />
+  </div>
+
   return (
     <div>
-      <Layout>
-        <Sidebar
-          sidebarOpen={sidebarOpen}
-          onCollapse={onToggleSidebar}
-          routes={routes}
-          currentPath={currentPath}
-        />
-        <Layout className="site-layout">
-          <Header sidebarOpen={sidebarOpen} onToggleSidebar={onToggleSidebar} />
-          <Switch>
-            {_.map(routes, (route, index) => (
-              <PrivateRoute
-                routes={history.location}
-                key={route.path}
-                path={route.path}
-                component={route.component}
-              />
-            ))}
-            <Route exact strict render={() => <Redirect to="/home" />} />
-          </Switch>
-        </Layout>
-      </Layout>
-      <GlobalStyle />
+      {
+        isAuthenticated ? main : window.location.replace(config.homeSSO + config.callbackURL)
+      }
     </div>
   );
 }
 
 const mapStateToProps = createStructuredSelector({
-  sidebarOpen: makeSelectSidebar()
+  sidebarOpen: makeSelectSidebar(),
+  isAuthenticated: makeSelectIsAuthenticated(),
+  role: makeSelectRole(),
+  userInfo: makeSelectUserInfo()
 });
 
 export function mapDispatchToProps(dispatch) {

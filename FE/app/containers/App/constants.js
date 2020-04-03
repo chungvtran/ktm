@@ -12,4 +12,9 @@
 export const LOAD_REPOS = 'boilerplate/App/LOAD_REPOS';
 export const LOAD_REPOS_SUCCESS = 'boilerplate/App/LOAD_REPOS_SUCCESS';
 export const LOAD_REPOS_ERROR = 'boilerplate/App/LOAD_REPOS_ERROR';
-export const TOGGLE_SIDEBAR = 'App/TOGGLE_SIDEBAR';
+
+export const TOGGLE_SIDEBAR = 'app/App/TOGGLE_SIDEBAR';
+export const SIGN_IN_START = 'app/App/SIGN_IN_START';
+export const SIGN_IN_SUCCESS = 'app/App/SIGN_IN_SUCCESS';
+export const SIGN_IN_FAILURE = 'app/App/SIGN_IN_FAILURE';
+export const SIGN_OUT_SUCCESS = 'app/App/SIGN_OUT_SUCCESS';

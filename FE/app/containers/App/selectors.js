@@ -39,10 +39,34 @@ const makeSelectLocation = () =>
     routerState => routerState.location,
   );
 
-const makeSelectSidebar = () => 
+const makeSelectSidebar = () =>
   createSelector(
     selectGlobal,
     globalState => globalState.sidebarOpen,
+  )
+
+const makeSelectIsAuthenticated = () =>
+  createSelector(
+    selectGlobal,
+    globalState => globalState.isAuthenticated,
+  )
+
+const makeSelectToken = () =>
+  createSelector(
+    selectGlobal,
+    globalState => globalState.token,
+  )
+
+const makeSelectUserInfo = () =>
+  createSelector(
+    selectGlobal,
+    globalState => globalState.userInfo,
+  )
+
+const makeSelectRole = () =>
+  createSelector(
+    selectGlobal,
+    globalState => globalState.role
   )
 
 export {
@@ -52,5 +76,8 @@ export {
   makeSelectError,
   makeSelectRepos,
   makeSelectLocation,
-  makeSelectSidebar
+  makeSelectSidebar,
+  makeSelectIsAuthenticated,
+  makeSelectRole,
+  makeSelectUserInfo
 };
