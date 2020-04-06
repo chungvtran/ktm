@@ -11,6 +11,9 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace KMS.Product.Ktm.Api.Controllers
 {
+    /// <summary>
+    /// Controller used for testing with postman purpose
+    /// </summary>
     [Route("api/[controller]")]
     [ApiController]
     public class TestController : ControllerBase
@@ -30,24 +33,10 @@ namespace KMS.Product.Ktm.Api.Controllers
             try
             {
                 //await _teamService.SyncTeamDatabaseWithKmsAsync(DateTime.Now);
-                await _empService.SyncEmployeeDatabaseWithKms();
+                //await _empService.SyncEmployeeDatabaseWithKms(DateTime.Now);
                 return Ok();
             }
             catch(BussinessException ex)
-            {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
-            }
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> CreateKudoTypeAsync(Employee employee)
-        {
-            try
-            {
-                await _empService.CreateEmployeeAsync(employee);
-                return Ok();
-            }
-            catch (BussinessException ex)
             {
                 return StatusCode(500, $"Internal server error: {ex.Message}");
             }

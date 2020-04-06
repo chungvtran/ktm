@@ -94,11 +94,8 @@ namespace KMS.Product.Ktm.Repository
                 throw new ArgumentNullException("entity");
             }
             entity.Modified = DateTime.Now;
-            //_logger.LogInformation($"{context.Entry(entity).State}");
-            //context.Entry(entity).State = EntityState.Detached;
             context.Entry(entity).Property(e => e.Created).IsModified = false;
             entities.Update(entity);
-            //context.Entry(entity).State = EntityState.Modified;
             if (saveChange)
                 await context.SaveChangesAsync();
         }

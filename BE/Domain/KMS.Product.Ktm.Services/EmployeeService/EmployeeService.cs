@@ -1,10 +1,12 @@
 ﻿using AutoMapper;
+using Hangfire;
 using KMS.Product.Ktm.Entities.Models;
 using KMS.Product.Ktm.EntitiesServices.DTOs;
 using KMS.Product.Ktm.EntitiesServices.Responses;
 using KMS.Product.Ktm.Services.AuthenticateService;
 using KMS.Product.Ktm.Services.RepoInterfaces;
 using KMS.Product.Ktm.Services.TeamService;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -23,6 +25,7 @@ namespace KMS.Product.Ktm.Services.EmployeeService
         private readonly IMapper _mapper;
         private readonly IAuthenticateService _authenticateService;
         private readonly ITeamService _teamService;
+        private readonly ILogger<EmployeeService> _logger;
 
         public const string KmsEmployeeRequestUrl = "https://hr.kms-technology.com/api/contact/ReturnContactList";
 
@@ -30,12 +33,14 @@ namespace KMS.Product.Ktm.Services.EmployeeService
         /// Inject Employee repository, AutoMapper, Authenticate service, Team service
         /// </summary>
         /// <returns></returns>
-        public EmployeeService(IEmployeeRepository employeeRepository, IMapper mapper, IAuthenticateService authenticateService, ITeamService teamService)
+        public EmployeeService(IEmployeeRepository employeeRepository, IMapper mapper, IAuthenticateService authenticateService, ITeamService teamService,
+            ILogger<EmployeeService> logger)
         {
             _employeeRepository = employeeRepository ?? throw new ArgumentNullException($"{nameof(employeeRepository)}");
             _mapper = mapper ?? throw new ArgumentNullException($"{nameof(mapper)}");
             _authenticateService = authenticateService ?? throw new ArgumentNullException($"{nameof(authenticateService)}");
             _teamService = teamService ?? throw new ArgumentNullException($"{nameof(teamService)}");
+            _logger = logger ?? throw new ArgumentNullException($"{nameof(logger)}");
         }
 
         /// <summary>
@@ -95,8 +100,9 @@ namespace KMS.Product.Ktm.Services.EmployeeService
         ///     Update release date of the current team to now
         /// </summary>
         /// <returns></returns>
-        public async Task SyncEmployeeDatabaseWithKms()
+        public async Task SyncEmployeeDatabaseWithKms(DateTime now)
         {
+            _logger.LogInformation("Start sync employee");
             // Fetch employees from KMS and map from DTO to Employee
             var fetchedEmployeeDTOs = await GetEmployeesFromKmsAsync();
             var fetchedEmployees = _mapper.Map<IEnumerable<KmsEmployeeDTO>, IEnumerable<Employee>>(fetchedEmployeeDTOs);
@@ -108,21 +114,40 @@ namespace KMS.Product.Ktm.Services.EmployeeService
             // Sync new employees
             var newEmployees = fetchedEmployees.Where(e => !databaseEmployeeBadgeIds.Contains(e.EmployeeBadgeId));
             await SyncNewEmployees(newEmployees);
-            // Sync active employees 
+            // Sync (update) active employees 
+            // Map Id of active employee with database employee with badge id as key. 
+            // Dictionary key is tuple of: badge id, last name, first name, and email.
+            // Because there are some duplicate email as "-" or badge id as "N/A"
+            // Finally, Assign EmployeeTeam for active employee from database employee
             var activeEmployees = fetchedEmployees.Where(e => databaseEmployeeBadgeIds.Contains(e.EmployeeBadgeId));
-            Dictionary<string, int> map = databaseEmployees.ToDictionary(x => x.EmployeeBadgeId, x => x.Id);
-            foreach (var item in activeEmployees)
+            Dictionary<Tuple<string, string, string, string>, int> map = databaseEmployees.ToDictionary(x => Tuple.Create(x.EmployeeBadgeId, x.LastName, x.FirstMidName, x.Email), x => x.Id);
+            foreach (var activeEmployee in activeEmployees)
             {
-                if (map.ContainsKey(item.EmployeeBadgeId))
+                var key = Tuple.Create(activeEmployee.EmployeeBadgeId, activeEmployee.LastName, activeEmployee.FirstMidName,activeEmployee.Email);
+                if (map.ContainsKey(key))
                 {
-                    item.Id = map[item.EmployeeBadgeId];
+                    activeEmployee.Id = map[key];
                 }
+            }            
+            foreach(var databaseEmployee in databaseEmployees)
+            {
+                activeEmployees.FirstOrDefault(e => e.Id == databaseEmployee.Id).EmployeeTeams = databaseEmployee.EmployeeTeams;
             }
-            activeEmployees.ToList().ForEach()
             await SyncActiveEmployees(activeEmployees);
             // Sync quit employees
             var quitEmployees = databaseEmployees.Where(e => !fetchedEmployeeBadgeIds.Contains(e.EmployeeBadgeId));
             await SyncQuitEmployees(quitEmployees);
+        }
+
+        /// <summary>
+        /// Used for Hangfire scheduler
+        /// </summary>
+        /// <param name="token"></param>
+        /// <returns></returns>
+        public async Task Run(IJobCancellationToken token)
+        {
+            token.ThrowIfCancellationRequested();
+            await SyncEmployeeDatabaseWithKms(DateTime.Now);
         }
 
         /// <summary>

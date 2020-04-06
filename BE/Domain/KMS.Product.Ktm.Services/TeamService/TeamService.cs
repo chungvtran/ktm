@@ -147,9 +147,13 @@ namespace KMS.Product.Ktm.Services.TeamService
             // Sync disband teams
             var disbandTeams = databaseTeams.Where(e => !fetchedTeamNames.Contains(e.TeamName));
             await SyncDisbandTeams(disbandTeams);
-            _logger.LogInformation("End sync team");
         }
 
+        /// <summary>
+        /// Used for Hangfire scheduler
+        /// </summary>
+        /// <param name="token"></param>
+        /// <returns></returns>
         public async Task Run(IJobCancellationToken token)
         {
             token.ThrowIfCancellationRequested();

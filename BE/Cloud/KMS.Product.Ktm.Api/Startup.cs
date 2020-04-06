@@ -27,6 +27,7 @@ using KMS.Product.Ktm.Services.AuthenticateService;
 using Hangfire;
 using Hangfire.SqlServer;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using KMS.Product.Ktm.Services.Hangfire;
 
 namespace KMS.Product.Ktm.Api
 {
@@ -42,13 +43,7 @@ namespace KMS.Product.Ktm.Api
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddControllers(); 
-
-            //services.AddAuthentication()
-            //    .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme)
-
-
-
+            services.AddControllers();
             services.AddAuthentication("KmsTokenAuth")
                 .AddScheme<KmsTokenAuthOptions, KmsTokenAuthHandler>("KmsTokenAuth", "KmsTokenAuth", opts => { });
             services.AddSingleton<IEmailConfiguration>(Configuration.GetSection("EmailConfiguration").Get<EmailConfiguration>());
@@ -68,22 +63,24 @@ namespace KMS.Product.Ktm.Api
             services.AddScoped<IEmployeeRepository, EmployeeRepository>();
             services.AddScoped<ITeamRepository, TeamRepository>();
             services.AddAutoMapper(typeof(AutoMapperProfile));
-            //// Add Hangfire services.
-            //services.AddHangfire(configuration => configuration
-            //    .SetDataCompatibilityLevel(CompatibilityLevel.Version_170)
-            //    .UseSimpleAssemblyNameTypeSerializer()
-            //    .UseRecommendedSerializerSettings()
-            //    .UseSqlServerStorage(Configuration.GetConnectionString("HangfireConnection"), new SqlServerStorageOptions
-            //    {
-            //        CommandBatchMaxTimeout = TimeSpan.FromMinutes(5),
-            //        SlidingInvisibilityTimeout = TimeSpan.FromMinutes(5),
-            //        QueuePollInterval = TimeSpan.Zero,
-            //        UseRecommendedIsolationLevel = true,
-            //        UsePageLocksOnDequeue = true,
-            //        DisableGlobalLocks = true
-            //    }));
-            //// Add the processing server as IHostedService
-            //services.AddHangfireServer();
+            // Add Hangfire services.
+            services.AddHangfire(configuration => configuration
+                .SetDataCompatibilityLevel(CompatibilityLevel.Version_170)
+                .UseSimpleAssemblyNameTypeSerializer()
+                .UseRecommendedSerializerSettings()
+                .UseSqlServerStorage(Configuration.GetConnectionString("HangfireConnection"), new SqlServerStorageOptions
+                {
+                    CommandBatchMaxTimeout = TimeSpan.FromMinutes(5),
+                    SlidingInvisibilityTimeout = TimeSpan.FromMinutes(5),
+                    QueuePollInterval = TimeSpan.Zero,
+                    UseRecommendedIsolationLevel = true,
+                    UsePageLocksOnDequeue = true,
+                    DisableGlobalLocks = true
+                }));
+            // Add the processing server as IHostedService
+            services.AddHangfireServer();
+            // Cache
+            services.AddMemoryCache();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -101,6 +98,14 @@ namespace KMS.Product.Ktm.Api
             app.UseRouting();
 
             app.UseAuthentication();
+
+            //Use Hangfire
+            app.UseHangfireServer(new BackgroundJobServerOptions
+            {
+                WorkerCount = 1,
+            });
+            GlobalJobFilters.Filters.Add(new AutomaticRetryAttribute { Attempts = 0 });
+            HangfireJobScheduler.ScheduleRecurringJob();
 
             app.UseAuthorization();
 

@@ -18,19 +18,29 @@ namespace KMS.Product.Ktm.Api.Controllers
     [ApiController]
     public class AccountController : ControllerBase
     {
+        private const string UserInfoRequestUrl = "https://home.kms-technology.com/api/account/authenticate";
+
         public AccountController()
         {
         }
 
+        /// <summary>
+        /// api/me
+        /// Get user information by token through KMS API
+        /// </summary>
+        /// <returns>
+        /// - Status OK 200 with user information
+        /// - Status Unauthorized 401 if token expires or invalid token
+        /// </returns>
         [HttpGet("me")]
-        public async Task<IActionResult> AccountUserAsync()
+        public async Task<IActionResult> GetUserInforAsync()
         {
             try
             {
                 HttpClient client = new HttpClient();
                 var token = Request.Headers["Authorization"].ToString().Replace("Bearer ", string.Empty);
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-                var response = await client.GetAsync("https://home.kms-technology.com/api/account/authenticate");
+                var response = await client.GetAsync(UserInfoRequestUrl);
                 if (response.StatusCode == HttpStatusCode.OK)
                 {                    
                     return Ok(await response.Content.ReadAsStringAsync());
