@@ -11,6 +11,6 @@ namespace KMS.Product.Ktm.EntitiesServices.DTOs
         /// Map ClientName in JSON response to TeamName when deserializing
         /// </summary>
         [JsonProperty("ClientName")]
-       public string TeamName { get; set; }    
+        public string TeamName { get; set; }    
     }
 }

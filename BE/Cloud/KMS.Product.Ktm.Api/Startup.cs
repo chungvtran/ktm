@@ -24,6 +24,9 @@ using KMS.Product.Ktm.Services.TeamService;
 using KMS.Product.Ktm.Services.EmployeeService;
 using KMS.Product.Ktm.Services.AutoMapper;
 using KMS.Product.Ktm.Services.AuthenticateService;
+using Hangfire;
+using Hangfire.SqlServer;
+using Microsoft.AspNetCore.Authentication.Cookies;
 
 namespace KMS.Product.Ktm.Api
 {
@@ -40,10 +43,16 @@ namespace KMS.Product.Ktm.Api
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllers(); 
+
+            //services.AddAuthentication()
+            //    .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme)
+
+
+
             services.AddAuthentication("KmsTokenAuth")
                 .AddScheme<KmsTokenAuthOptions, KmsTokenAuthHandler>("KmsTokenAuth", "KmsTokenAuth", opts => { });
             services.AddSingleton<IEmailConfiguration>(Configuration.GetSection("EmailConfiguration").Get<EmailConfiguration>());
-            services.AddDbContextPool<KtmDbContext>(
+            services.AddDbContext<KtmDbContext>(
                 options => options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection"), 
                 b => b.MigrationsAssembly("KMS.Product.Ktm.Repository")));
             services.AddScoped<IKudoTypeService, KudoTypeService>();
@@ -59,6 +68,22 @@ namespace KMS.Product.Ktm.Api
             services.AddScoped<IEmployeeRepository, EmployeeRepository>();
             services.AddScoped<ITeamRepository, TeamRepository>();
             services.AddAutoMapper(typeof(AutoMapperProfile));
+            //// Add Hangfire services.
+            //services.AddHangfire(configuration => configuration
+            //    .SetDataCompatibilityLevel(CompatibilityLevel.Version_170)
+            //    .UseSimpleAssemblyNameTypeSerializer()
+            //    .UseRecommendedSerializerSettings()
+            //    .UseSqlServerStorage(Configuration.GetConnectionString("HangfireConnection"), new SqlServerStorageOptions
+            //    {
+            //        CommandBatchMaxTimeout = TimeSpan.FromMinutes(5),
+            //        SlidingInvisibilityTimeout = TimeSpan.FromMinutes(5),
+            //        QueuePollInterval = TimeSpan.Zero,
+            //        UseRecommendedIsolationLevel = true,
+            //        UsePageLocksOnDequeue = true,
+            //        DisableGlobalLocks = true
+            //    }));
+            //// Add the processing server as IHostedService
+            //services.AddHangfireServer();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -69,11 +94,13 @@ namespace KMS.Product.Ktm.Api
                 app.UseDeveloperExceptionPage();
             }
 
-            app.UseAuthentication();
+            //app.UseAuthentication();
 
             app.UseHttpsRedirection();
 
             app.UseRouting();
+
+            app.UseAuthentication();
 
             app.UseAuthorization();
 

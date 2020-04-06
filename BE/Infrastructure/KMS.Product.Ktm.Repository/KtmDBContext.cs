@@ -22,6 +22,11 @@ namespace KMS.Product.Ktm.Repository
         public DbSet<Kudo> Kudos { get; set; }
         public DbSet<KudoDetail> KudoDetails { get; set; }
 
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        {
+            optionsBuilder.UseLazyLoadingProxies();
+        }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             foreach (var property in modelBuilder.Model.GetEntityTypes()

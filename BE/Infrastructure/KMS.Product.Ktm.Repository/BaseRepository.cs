@@ -1,6 +1,7 @@
 ﻿using KMS.Product.Ktm.Entities.Models;
 using KMS.Product.Ktm.Services.RepoInterfaces;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,11 +19,13 @@ namespace KMS.Product.Ktm.Repository
     {
         private readonly KtmDbContext context;
         private readonly DbSet<T> entities;
+        private readonly ILogger<T> _logger;
 
-        public BaseRepository(KtmDbContext context)
+        public BaseRepository(KtmDbContext context, ILogger<T> logger)
         {
             this.context = context;
             entities = context.Set<T>();
+            _logger = logger;
         }
 
         /// <summary>
@@ -31,7 +34,7 @@ namespace KMS.Product.Ktm.Repository
         /// <returns></returns>
         public IQueryable<T> GetAll()
         {
-            return entities.AsQueryable();
+            return entities.AsQueryable().AsNoTracking();
         }
 
 
@@ -41,7 +44,7 @@ namespace KMS.Product.Ktm.Repository
         /// <returns></returns>
         public IQueryable<T> GetByCondition(Expression<Func<T, bool>> expression)
         {
-            return entities.Where(expression).AsQueryable();
+            return entities.Where(expression).AsQueryable().AsNoTracking();
         }
 
         /// <summary>
@@ -73,7 +76,9 @@ namespace KMS.Product.Ktm.Repository
             entities.Add(entity);
 
             if (saveChange)
+            {
                 await context.SaveChangesAsync();
+            }
         }
 
         /// <summary>
@@ -89,7 +94,11 @@ namespace KMS.Product.Ktm.Repository
                 throw new ArgumentNullException("entity");
             }
             entity.Modified = DateTime.Now;
+            //_logger.LogInformation($"{context.Entry(entity).State}");
+            //context.Entry(entity).State = EntityState.Detached;
+            context.Entry(entity).Property(e => e.Created).IsModified = false;
             entities.Update(entity);
+            //context.Entry(entity).State = EntityState.Modified;
             if (saveChange)
                 await context.SaveChangesAsync();
         }

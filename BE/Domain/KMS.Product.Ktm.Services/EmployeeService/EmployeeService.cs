@@ -110,6 +110,15 @@ namespace KMS.Product.Ktm.Services.EmployeeService
             await SyncNewEmployees(newEmployees);
             // Sync active employees 
             var activeEmployees = fetchedEmployees.Where(e => databaseEmployeeBadgeIds.Contains(e.EmployeeBadgeId));
+            Dictionary<string, int> map = databaseEmployees.ToDictionary(x => x.EmployeeBadgeId, x => x.Id);
+            foreach (var item in activeEmployees)
+            {
+                if (map.ContainsKey(item.EmployeeBadgeId))
+                {
+                    item.Id = map[item.EmployeeBadgeId];
+                }
+            }
+            activeEmployees.ToList().ForEach()
             await SyncActiveEmployees(activeEmployees);
             // Sync quit employees
             var quitEmployees = databaseEmployees.Where(e => !fetchedEmployeeBadgeIds.Contains(e.EmployeeBadgeId));
@@ -167,7 +176,7 @@ namespace KMS.Product.Ktm.Services.EmployeeService
             {
                 var currentTeam = newEmployee.CurrentTeam;
                 var currentTeamId = await _teamService.GetTeamIdByTeamNameAsync(currentTeam);
-                newEmployee.EmployeeTeams.Add(new EmployeeTeam()
+                newEmployee.EmployeeTeams.Add(new EmployeeTeam()           
                 {
                     TeamID = currentTeamId,
                     JoinedDate = DateTime.Now,
