@@ -1,5 +1,11 @@
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable , of, throwError } from 'rxjs';
+import { retry, concat, retryWhen, take, flatMap, delay } from 'rxjs/operators';
+import { environment } from '@environments/environment';
+import { HttpClient } from '@angular/common/http';
+import { LightKudos, KudosState } from '@app/_models';
+import { Store } from '@ngrx/store';
+import { updateKudos } from '@app/_reducers/kudos-list.reducer';
 
 
 @Injectable({
@@ -7,9 +13,33 @@ import { Observable } from 'rxjs';
 })
 export class KudosService {
 
-  constructor() { 
-    getAllKudos(): Observable<any> {
-      
-    }
+  constructor(private http: HttpClient, private store: Store<{kudosState: KudosState}>) { 
+    
+  }
+  
+  getMyKudos(): Observable<any> {
+    let url = `${environment.apiUrl}${environment.methods.UserKudos}`;
+    console.log(url);
+    let request$ = this.http.get(url).pipe(retryWhen(error => {
+      return error.pipe(
+         flatMap((error: any) => {
+            if(error.status  === 503) {
+              return of(error.status).pipe(delay(1500));
+            }
+            return throwError({error: 'No retry'});
+         }),
+         take(5),
+         concat(throwError({error: 'Sorry, there was an error (after 5 retries)'})));
+    }));
+    request$.subscribe((kudos:KudosState)=>{
+      this.store.dispatch(updateKudos(kudos));
+    });
+    return request$;
+  }
+
+  createKudos(data: LightKudos) {
+    let url = `${environment.apiUrl}${environment.methods.CreateKudos}`;
+    let request$ = this.http.post(url, data);
+    return request$;
   }
 }
