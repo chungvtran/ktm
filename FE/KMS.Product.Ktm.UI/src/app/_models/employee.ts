@@ -1,6 +1,8 @@
 import { User } from './user';
 export class Employee extends User {
-    employeeId: number;
+    employeeId: string;
+    employeeCode: string;
+    employeeNumber: number;
     joinDate: Date;
     currentOfficeId: number;
     currentOffice: string;
@@ -18,4 +20,5 @@ export class Employee extends User {
     gender: number;
     avatarUrl: string;
     imgUrl: string;
+    userAccount: string;
 }

@@ -1,9 +1,14 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Output, EventEmitter, ViewChild } from '@angular/core';
 import { UserService } from '@app/_services';
-import { Observable } from 'rxjs';
+import { Observable, forkJoin, of, from } from 'rxjs';
 import { Employee, LightKudos } from '@app/_models';
 import { KudosService } from '@app/_services/kudos.service';
 import { NzMessageService } from 'ng-zorro-antd/message';
+import { QuillEditorComponent } from 'ngx-quill';
+import 'quill-mention';
+import * as _ from 'underscore';
+import * as $ from 'jquery';
+import { map, mergeMap, mergeAll } from 'rxjs/operators';
 
 @Component({
   selector: 'app-create-kudos',
@@ -11,8 +16,12 @@ import { NzMessageService } from 'ng-zorro-antd/message';
   styleUrls: ['./create-kudos.component.less']
 })
 export class CreateKudosComponent implements OnInit {
+
   visible = false;
   profileInfo$: Observable<Employee>;
+  userSuggestion$: Observable<any[]>;
+  selectedUsers: string[] = [];
+  suggestions: string[] = [];
 
   constructor(private userService: UserService, private kudosService: KudosService, private message: NzMessageService) { }
 
@@ -21,33 +30,69 @@ export class CreateKudosComponent implements OnInit {
   }
 
   createKudos(): void {
-    let data: LightKudos = {
-      ReceiverUsername: "phienle",
-      Content: this.inputValue,
-      SlackEmoji: ":clap:",
-      KudoTypeId: 1
-    };
-    this.kudosService.createKudos(data).subscribe(response=>{
+    let html = $(this.content)[0];
+    
+    forkJoin(of(new Observable(obs=>{
+      $(html).children("span[class='mention']").each((idx, val)=>{
+          obs.next($(val).attr("data-username"));
+        });
+      }).pipe(
+        mergeMap(async (username: string) =>  { 
+          let data =
+          <LightKudos> {
+            ReceiverUsername: username,
+            Content: this.content,
+            SlackEmoji: ":clap:",
+            KudoTypeId: 1
+          };
+          let reponse = await this.kudosService.createKudos(data).toPromise();
+          return reponse;})
+    ).toPromise())).subscribe(response=>{
       this.kudosService.getMyKudos();
-      this.cleanUpModel();
-      this.message.success('Kudos. Your message is sent.', {
+      this.content = '';
+      this.message.success('Kudos!!! Your message(s) is sent.', {
         nzDuration: 1500
       });
-    })
+    });
   }
 
-  cleanUpModel() {
-    this.inputValue = '';
+  //
+  // Rich editor
+  //
+
+  toolbarOptions = ['bold', 'italic', 'underline', 'strike'];
+
+  @ViewChild(QuillEditorComponent, { static: true }) 
+  editor: QuillEditorComponent
+  
+  content = ''
+  
+  modules = {
+    mention: {
+      allowedChars: /^[A-Za-z\sÅÄÖåäö]*$/,
+      dataAttributes: ['id', 'value', 'denotationChar','username'],
+      onSelect: (item, insertItem) => {
+        const editor = this.editor.quillEditor
+        insertItem(item)
+        editor.insertText(editor.getLength() - 1, '', 'user')
+      },
+      source: (searchTerm, renderList) => {
+        const values = [];
+
+        if (searchTerm.length === 0) {
+          renderList(values, searchTerm)
+        } else {
+          this.userSuggestion$ = this.userService.getSuggestedUserList(searchTerm, 10);
+          this.userSuggestion$.subscribe(users=>{
+            renderList(users, searchTerm);
+          });
+        }
+      }
+    },
+    toolbar: null
   }
 
-  inputValue: string = '';
-  suggestions = ['minhphien','phienle'];
+  //
+  //
 
-  onChange(value: string): void {
-    console.log(value);
-  }
-
-  onSelect(suggestion: string): void {
-    console.log(`onSelect ${suggestion}`);
-  }
 }

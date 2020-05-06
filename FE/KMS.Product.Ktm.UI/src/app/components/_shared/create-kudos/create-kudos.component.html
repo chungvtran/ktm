@@ -1,15 +1,11 @@
-<!-- <button nz-button nzType="primary" >Create</button> -->
-<div class="createkudos d-flex flex-row" *ngIf="profileInfo$ | async as profileInfo">
-  <div class="pr-3">
+<div class="createkudos d-flex flex-row"  >
+  <div class="pr-3" *ngVar="profileInfo$ | async as profileInfo">
     <div class="profile-thumbnail rounded-circle overflow-hidden">
-    <img src="{{profileInfo.imgUrl}}"  >
-  </div>
-</div>
-  
+      <img src="{{profileInfo != null ? profileInfo.imgUrl : ''}}" >
+    </div>
+  </div>  
   <div class="d-flex flex-column w-100">
-    <nz-mention [nzSuggestions]="suggestions" (nzOnSelect)="onSelect($event)">
-      <textarea class="message-textarea" nz-input placeholder="Says something good about @someone for #something."  [(ngModel)]="inputValue" [nzAutosize]="{ minRows: 1, maxRows: 5 }" (ngModelChange)="onChange($event)"></textarea>
-    </nz-mention>
+    <quill-editor [(ngModel)]="content" [modules]="modules" class="border bg-white" placeholder="Says something good about @someone for something." ></quill-editor>
     <div class="mt-2">
       <button (click)="createKudos()" class="btn btn-default round-pill create-kudos-button">Kudos
       </button>
