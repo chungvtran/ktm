@@ -1,14 +1,18 @@
-﻿<div >
-  <div class="ml--3 mr--3 p-3 border-bottom ">
+﻿<div class="col-xl-8 border-right m-0 p-0">
+  <div class="p-3 border-bottom ">
     <app-create-kudos></app-create-kudos>
   </div>
   <div >
-    <nz-tabset nzTabPosition="top">
+    <nz-tabset nzTabPosition="top" >
       <nz-tab nzTitle="Kudos received">
-        <app-table-kudos-recevied></app-table-kudos-recevied>
+        <div class="mt--3">
+          <app-table-kudos-received [kudosData] = "receivedKudos$" ></app-table-kudos-received>
+        </div>
       </nz-tab>
       <nz-tab nzTitle="Kudos sent">
-        <app-table-kudos-sent></app-table-kudos-sent>
+        <div class="mt--3">
+          <app-table-kudos-sent [kudosData] = "sentKudos$" ></app-table-kudos-sent>
+        </div>
       </nz-tab>
     </nz-tabset>
   </div>
