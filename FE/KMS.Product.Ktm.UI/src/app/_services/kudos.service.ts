@@ -2,11 +2,13 @@ import { Injectable } from '@angular/core';
 import { Observable , of, throwError } from 'rxjs';
 import { retry, concat, retryWhen, take, flatMap, delay, map } from 'rxjs/operators';
 import { environment } from '@environments/environment';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { LightKudos, KudosState, Kudos } from '@app/_models';
 import { Store } from '@ngrx/store';
 import { updateKudos } from '@app/_reducers/kudos-list.reducer';
 import * as _ from 'underscore';
+import { SelectFilter } from '@app/_models/SelectFilter';
+import { KudosType } from '@app/_models/kudosType';
 
 
 @Injectable({
@@ -23,6 +25,7 @@ export class KudosService {
     let request$ = this.http.get(url).pipe(retryWhen(error => {
         return error.pipe(
           flatMap((error: any) => {
+            
               if(error.status  === 503) {
                 return of(error.status).pipe(delay(1500));
               }
@@ -56,26 +59,40 @@ export class KudosService {
   }
 
   getKudosReportData(teamId: number, kudoType: number, dateRange?: Date[]): any {
-    let dateParams = `${dateRange && dateRange[0] ? '&dateFrom='+dateRange[0].toDateString():""}${dateRange && dateRange[1] ? '&dateTo='+dateRange[1].toDateString():""}`;
-    let url = `${environment.apiUrl}${environment.methods.Report}?teamIds=${teamId}&kudoTypeIds=${kudoType}${dateParams}`;
-    let request$ = this.http.get(url);
+    let params:HttpParams;
+    params = this
+      .appendDateParams(params,dateRange)
+      .append("kudoTypeIds", kudoType.toString())
+      .append("teamIds", teamId.toString());
+
+    let url = `${environment.apiUrl}${environment.methods.Report}`;
+    let request$ = this.http.get(url, { params: params});
+
     return request$;
   }
 
   getReceivedKudosByUserReportData(badgeId: string, kudoType: number, dateRange?: Date[]) {
-    let dateParams = `${dateRange && dateRange[0] ? '&dateFrom='+dateRange[0].toDateString():""}${dateRange && dateRange[1] ? '&dateTo='+dateRange[1].toDateString():""}`;
-    let url = `${environment.apiUrl}${environment.methods.ReportReceivedByUser}/${badgeId}?kudoTypeIds=${kudoType}${dateParams}`;
-    return this.requestKudosDetailByUserReportData(url);
+    let params: HttpParams;
+    params = this
+      .appendDateParams(params,dateRange)
+      .append("kudoTypeIds", kudoType.toString());
+      
+    let url = `${environment.apiUrl}${environment.methods.ReportReceivedByUser}/${badgeId}`;
+    return this.requestKudosDetailByUserReportData(url, params);
   }
 
   getSentKudosByUserReportData(badgeId: string, kudoType: number, dateRange?: Date[]) {
-    let dateParams = `${dateRange && dateRange[0] ? '&dateFrom='+dateRange[0].toDateString():""}${dateRange && dateRange[1] ? '&dateTo='+dateRange[1].toDateString():""}`;
-    let url = `${environment.apiUrl}${environment.methods.ReportSentByUser}/${badgeId}?kudoTypeIds=${kudoType}${dateParams}`;
-    return this.requestKudosDetailByUserReportData(url);
+    let params:HttpParams;
+    params = this
+      .appendDateParams(params,dateRange)
+      .append("kudoTypeIds", kudoType.toString());
+
+    let url = `${environment.apiUrl}${environment.methods.ReportSentByUser}/${badgeId}`;
+    return this.requestKudosDetailByUserReportData(url, params);
   }
 
-  private requestKudosDetailByUserReportData(url) {
-    let request$ = this.http.get(url).pipe(retryWhen(error => {
+  private requestKudosDetailByUserReportData(url, params?: HttpParams) {
+    let request$ = this.http.get(url, {params: params}).pipe(retryWhen(error => {
       return error.pipe(
         flatMap((error: any) => {
             if(error.status  === 503) {
@@ -93,18 +110,37 @@ export class KudosService {
       kudos = _.sortBy(kudos,(x)=>x.created).reverse();
       return kudos;
     }));
-    console.log('starting ', request$);
     return request$;
   }
 
-  getKudosAcrossTeamReportData(teamIds: string[], kudoType: number, dateRange?: Date[]): any {
-    let dateParams = `${dateRange && dateRange[0] ? '&dateFrom='+dateRange[0].toDateString():""}${dateRange && dateRange[1] ? '&dateTo='+dateRange[1].toDateString():""}`;
-    let teamIdsParams = _
-      .map(teamIds, x => "teamIds="+x)
-      .reduce((x,y) => x + "&" + y,"");
-    let url = `${environment.apiUrl}${environment.methods.ReportKudosAcrossTeam}?${teamIdsParams}&kudoTypeIds=${kudoType}${dateParams}`;
-    console.log('requestKudos',url);
-    let request$ = this.http.get(url);
+  getKudosAcrossTeamReportData(kudoType: number, dateRange: Date[], teamIds: string[]): any {
+    let params: HttpParams = new HttpParams()
+    params = this.appendParamList(params, "teamIds", teamIds);
+    params = this
+      .appendDateParams(params,dateRange)
+      .append("kudoTypeIds", kudoType.toString());
+
+    let url = `${environment.apiUrl}${environment.methods.ReportKudosAcrossTeam}`;
+
+    let request$ = this.http.get(url, {params: params});
     return request$;
+  }
+
+  private appendDateParams(params: HttpParams, dateRange?: Date[]): HttpParams {
+    if(!params){ params = new HttpParams() }
+    if(!dateRange) return params;
+    return params
+      .append("dateFrom", dateRange[0] ? dateRange[0].toDateString(): "")
+      .append("dateTo", dateRange[1] ? dateRange[1].toDateString(): "")
+  }
+
+  private appendParamList(params: HttpParams, key: string, items: string[]){
+    if(!params){ params = new HttpParams() }
+    if (!items) return params;
+    console.log('check', items);
+    _.forEach(items, (x) => { 
+      params = params.append(key, x)
+    });
+    return params;
   }
 }
